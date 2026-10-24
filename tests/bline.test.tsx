@@ -1,7 +1,7 @@
 import { expect, test } from 'claude-code/testing'
 
 const HINT = {
-  plugin: 'model-bar',
+  plugin: 'bline',
   component: 'PromptHint',
   requestId: 'hint',
   props: { isDraft: false, isWorking: false, hint: '? for shortcuts' },

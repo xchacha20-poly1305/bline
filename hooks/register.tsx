@@ -3,8 +3,8 @@ import type { EngineInterface, Register, SessionContextUsage } from 'claude-code
 
 import type { ContextFill, Effort } from '../types'
 
-const effortAtom = atom({ plugin: 'model-bar', key: 'effort' } as const, null)
-const contextAtom = atom({ plugin: 'model-bar', key: 'context' } as const, null)
+const effortAtom = atom({ plugin: 'bline', key: 'effort' } as const, null)
+const contextAtom = atom({ plugin: 'bline', key: 'context' } as const, null)
 
 const BAR_CELLS = 14
 

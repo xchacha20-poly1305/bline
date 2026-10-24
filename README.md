@@ -1,4 +1,4 @@
-# model-bar
+# bline
 
 A Claude Code mod that puts the model, its reasoning effort and the context window fill on the hint line under the prompt:
 
@@ -18,7 +18,7 @@ From [agent-plugins](https://github.com/xchacha20-poly1305/agent-plugins):
 
 ```shell
 claude plugin marketplace add https://github.com/xchacha20-poly1305/agent-plugins.git
-claude plugin install model-bar@anrong-plugins
+claude plugin install bline@anrong-plugins
 ```
 
 ## License

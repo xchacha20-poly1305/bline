@@ -5,7 +5,7 @@ export type ContextFill = { tokens?: number; window: number; percent?: number }
 
 declare module 'claude-code' {
   interface PluginState {
-    'model-bar': {
+    'bline': {
       effort: Effort | null
       context: ContextFill | null
     }
