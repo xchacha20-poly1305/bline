@@ -14,16 +14,11 @@ The engine's own hint line (`? for shortcuts`, `esc to interrupt`, its pills) st
 
 ## Install
 
-At the prompt of a Claude Code terminal session:
+From [agent-plugins](https://github.com/xchacha20-poly1305/agent-plugins):
 
-```
-/plugin install model-bar --marketplace xchacha20-poly1305/bline
-```
-
-Answer `y` to add the marketplace, then pick a scope. From a shell:
-
-```
-claude plugin install model-bar --marketplace xchacha20-poly1305/bline
+```shell
+claude plugin marketplace add https://github.com/xchacha20-poly1305/agent-plugins.git
+claude plugin install model-bar@anrong-plugins
 ```
 
 ## License
