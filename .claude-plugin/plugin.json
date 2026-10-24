@@ -1,0 +1,9 @@
+{
+  "name": "model-bar",
+  "version": "0.1.0",
+  "description": "Shows the model, its effort and the context window fill on the line under the prompt",
+  "author": { "name": "xchacha20-poly1305" },
+  "repository": "https://github.com/xchacha20-poly1305/bline",
+  "license": "MIT",
+  "types": "./types/index.d.ts"
+}
