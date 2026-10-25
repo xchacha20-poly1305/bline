@@ -1,5 +1,5 @@
 import { atom, read, update } from 'claude-code'
-import type { EngineInterface, Register, SessionContextUsage } from 'claude-code'
+import type { EngineInterface, Register, SessionContextUsage, Settings } from 'claude-code'
 
 import type { ContextFill, Effort } from '../types'
 
@@ -43,6 +43,11 @@ const FILL_COLORS: ReadonlyArray<readonly [number, string]> = [
 function fillColor(percent: number): string | undefined {
   return FILL_COLORS.find(([bound]) => percent < bound)?.[1]
 }
+
+// What a click on each part runs; `/usage` opens the `/status` dialog on its Usage tab.
+const MODEL_COMMAND = 'model'
+const EFFORT_COMMAND = 'effort'
+const USAGE_COMMAND = 'usage'
 
 const MODEL_PREFIX = 'claude-'
 const FAST_MARK = '⚡'
@@ -93,10 +98,28 @@ function usedPercent(context: ContextFill): number {
   return Math.round((context.tokens / context.window) * 100)
 }
 
-async function readSettingsEffort($: EngineInterface): Promise<Effort | null> {
-  const value = await $.settings.read({ key: 'effortLevel' })
+const EFFORT_SETTING = 'effortLevel'
+// The effort picker saves under `modelSettings.<model id>`, over the top-level one.
+const MODEL_SETTINGS = 'modelSettings'
 
+function isRecord(value: unknown): value is Readonly<Record<string, unknown>> {
+  return typeof value === 'object' && value !== null
+}
+
+function toEffort(value: unknown): Effort | null {
   return typeof value === 'string' || typeof value === 'number' ? value : null
+}
+
+function settingsEffort(settings: Settings, model: string): Effort | null {
+  const perModel = settings[MODEL_SETTINGS]
+  const modelEntry = isRecord(perModel) ? perModel[model] : undefined
+  const modelEffort = isRecord(modelEntry) ? toEffort(modelEntry[EFFORT_SETTING]) : null
+
+  return modelEffort ?? toEffort(settings[EFFORT_SETTING])
+}
+
+async function readSettingsEffort($: EngineInterface): Promise<Effort | null> {
+  return settingsEffort(await $.settings.read(), await $.session.model())
 }
 
 export const register: Register = on => {
@@ -126,11 +149,28 @@ export const register: Register = on => {
     return yield* next(e)
   })
 
-  on('command.run', { command: 'effort' }, async ($, e, next) => {
+  // Typed with an argument, `/effort` names the effort; bare, its picker
+  // saves to the settings, which the `settings.read` hook below picks up.
+  on('command.run', { command: EFFORT_COMMAND }, async ($, e, next) => {
     const result = await next(e)
     const typed = e.args.trim()
-    const effort = typed === '' ? await readSettingsEffort($) : typed
-    await update($, effortAtom, current => effort ?? current)
+
+    if (typed !== '') {
+      await update($, effortAtom, () => typed)
+    }
+
+    return result
+  })
+
+  // The engine merges the settings again whenever they change, so this sees
+  // the effort picker's pick however `/effort` was started, a click included.
+  on('settings.read', async ($, e, next) => {
+    const result = await next(e)
+
+    if (result.deny === undefined && next.origin.plugin === 'engine' && e.source === undefined) {
+      const effort = settingsEffort(result.value, await $.session.model())
+      await update($, effortAtom, current => effort ?? current)
+    }
 
     return result
   })
@@ -143,7 +183,7 @@ export const register: Register = on => {
     const isFast = (await $.settings.read({ key: 'fastMode' })) === true
     const effort = await read($, effortAtom)
     const context = await read($, contextAtom)
-    const { Box, Text } = $.ui.resolve(e)
+    const { Box, Button, Text } = $.ui.resolve(e)
 
     const effortLabel = effort === null ? null : String(effort)
     const effortKey = effortLabel?.toLowerCase() ?? ''
@@ -163,19 +203,25 @@ export const register: Register = on => {
     // in its siblings: the row stretches by default and a spacer takes the rest.
     return (
       <Box flexDirection="row">
-        <Box flexShrink={0} marginRight={2}>
-          <Text>
+        <Box flexDirection="row" flexShrink={0} marginRight={2}>
+          <Button key="model" plain onPress={() => void $.command.run({ command: MODEL_COMMAND })}>
             {family === undefined ? null : `${family.emoji} `}
             <Text color={family?.color}>{model}</Text>
             {isFast ? FAST_MARK : null}
-            {effortText === null ? null : <Text> ({effortText})</Text>}
-          </Text>
+          </Button>
+          {effortText === null ? null : (
+            <Button key="effort" plain onPress={() => void $.command.run({ command: EFFORT_COMMAND })}>
+              {' ('}
+              {effortText}
+              {')'}
+            </Button>
+          )}
         </Box>
         {engineLine}
         <Box flexGrow={1} />
         {context === null || percent === null ? null : (
           <Box flexShrink={0} marginLeft={2}>
-            <Text>
+            <Button key="context" plain onPress={() => void $.command.run({ command: USAGE_COMMAND })}>
               {percent >= NEARLY_FULL_PERCENT ? `${NEARLY_FULL_MARK} ` : null}
               <Text color={fillColor(percent)}>{'█'.repeat(filled)}</Text>
               <Text dimColor>{'░'.repeat(BAR_CELLS - filled)}</Text>
@@ -184,7 +230,7 @@ export const register: Register = on => {
               {' '}
               <Text dimColor>{`of ${formatTokens(context.window)}`}</Text>
               {')'}
-            </Text>
+            </Button>
           </Box>
         )}
       </Box>

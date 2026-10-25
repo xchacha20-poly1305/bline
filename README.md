@@ -10,6 +10,8 @@ A Claude Code mod that puts the model, its reasoning effort and the context wind
 - **Effort**, in brackets: ultra, ultracode and max in rainbow colors, xhigh red, high orange, medium yellow, low green, any other value blue.
 - **Context window**, right: a 14-cell bar and the share used, green under 50%, yellow under 80%, red from 80%, where `🈵` shows before the bar.
 
+Each part is clickable: the model runs `/model`, the effort `/effort`, and the context bar `/usage`, the Usage tab of `/status`. A click during a turn runs once the turn ends.
+
 ![Screenshot](./assets/screenshot.png)
 
 ## Install
